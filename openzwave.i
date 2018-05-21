@@ -18,12 +18,20 @@ namespace std
   struct runtime_error {};
 }
 
+// #cgo CFLAGS: -Iopen-zwave/cpp/src
+// #cgo CXXFLAGS: -Iopen-zwave/cpp/src
+// #cgo LDFLAGS: -lopenzwave
+
+%rename ("$ignore") OpenZWave::Node::CreateValueID;
+
 %{
+    #include "Defs.h"
+    using namespace std;
+    using namespace OpenZWave;
     #include "Bitfield.h"
     #include "Driver.h"
     #include "Manager.h"
     #include "Node.h"
-    #include "Defs.h"
     #include "Options.h"
     #include "Utils.h"   
     #include "DoxygenMain.h"
