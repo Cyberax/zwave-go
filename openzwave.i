@@ -18,10 +18,6 @@ namespace std
   struct runtime_error {};
 }
 
-// #cgo CFLAGS: -Iopen-zwave/cpp/src
-// #cgo CXXFLAGS: -Iopen-zwave/cpp/src
-// #cgo LDFLAGS: -lopenzwave
-
 %rename ("$ignore") OpenZWave::Node::CreateValueID;
 
 %{
@@ -43,6 +39,11 @@ namespace std
     #include "ZWSecurity.h"
 %}
 
+%insert(cgo_comment) %{
+#cgo CFLAGS: -Iopen-zwave/cpp/src
+#cgo CXXFLAGS: -Iopen-zwave/cpp/src
+#cgo LDFLAGS: -lopenzwave
+%}
 
 // Parse the original header file
 %include "Bitfield.h"
