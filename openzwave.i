@@ -1,11 +1,13 @@
 // pair.i - SWIG interface
-%module openzwave
+%module(directors="1")  openzwave
      
 %feature("flatnested");
 
 %rename(inc) operator++;
 %rename(eq) operator==;
 %rename(neq) operator!=;
+%rename(lt) operator<;
+%rename(gt) operator>;
 
 #define OPENZWAVE_EXPORT 
 #define OPENZWAVE_EXPORT_WARNINGS_OFF
@@ -19,9 +21,15 @@ namespace std
 }
 
 %rename ("$ignore") OpenZWave::Node::CreateValueID;
+%include "std_string.i"
+%include "std_vector.i"
+%include "exception.i"
 
 %{
     #include "Defs.h"
+    #undef DEPRECATED
+    #define DEPRECATED
+
     using namespace std;
     using namespace OpenZWave;
     #include "Bitfield.h"
@@ -37,6 +45,22 @@ namespace std
     #include "OZWException.h"
     #include "Scene.h"
     #include "ZWSecurity.h"
+
+    #include "value_classes/Value.h"
+    #include "value_classes/ValueBool.h"
+    #include "value_classes/ValueButton.h"
+    #include "value_classes/ValueByte.h"
+    #include "value_classes/ValueDecimal.h"
+    #include "value_classes/ValueID.h"
+    #include "value_classes/ValueInt.h"
+    #include "value_classes/ValueList.h"
+    #include "value_classes/ValueRaw.h"
+    #include "value_classes/ValueSchedule.h"
+    #include "value_classes/ValueShort.h"
+    #include "value_classes/ValueStore.h"
+    #include "value_classes/ValueString.h"
+
+    #include "CallbackAdapter.h"
 %}
 
 %insert(cgo_comment) %{
@@ -46,6 +70,10 @@ namespace std
 %}
 
 // Parse the original header file
+%feature("director") OpenZWave::CallbackAdapter;
+%include "CallbackAdapter.h"
+using namespace std;
+
 %include "Bitfield.h"
 %include "Driver.h"
 %include "Manager.h"
@@ -60,3 +88,19 @@ namespace std
 %include "OZWException.h"
 %include "Scene.h"
 %include "ZWSecurity.h"
+
+%include "platform/Ref.h"
+
+%include "value_classes/Value.h"
+%include "value_classes/ValueBool.h"
+%include "value_classes/ValueButton.h"
+%include "value_classes/ValueByte.h"
+%include "value_classes/ValueDecimal.h"
+%include "value_classes/ValueID.h"
+%include "value_classes/ValueInt.h"
+%include "value_classes/ValueList.h"
+%include "value_classes/ValueRaw.h"
+%include "value_classes/ValueSchedule.h"
+%include "value_classes/ValueShort.h"
+%include "value_classes/ValueStore.h"
+%include "value_classes/ValueString.h"
