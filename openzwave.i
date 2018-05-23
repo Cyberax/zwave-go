@@ -25,6 +25,10 @@ namespace std
 %include "std_vector.i"
 %include "exception.i"
 
+// Use explicitly sized types
+%typemap(gotype) int, const int & "int32"
+%typemap(gotype) unsigned int, const unsigned int & "uint32"
+
 %{
     #include "Defs.h"
     #undef DEPRECATED
@@ -74,11 +78,12 @@ namespace std
 %include "CallbackAdapter.h"
 using namespace std;
 
+%include "Defs.h"
+
 %include "Bitfield.h"
 %include "Driver.h"
 %include "Manager.h"
 %include "Node.h"
-%include "Defs.h"
 %include "Options.h"
 %include "Utils.h"   
 %include "DoxygenMain.h"
