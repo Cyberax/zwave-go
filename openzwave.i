@@ -67,6 +67,12 @@ namespace std
     #include "CallbackAdapter.h"
 %}
 
+%insert(cgo_comment) %{
+#cgo CFLAGS: -Iopen-zwave/cpp/src
+#cgo CXXFLAGS: -Iopen-zwave/cpp/src
+#cgo LDFLAGS: -lopenzwave
+%}
+
 // Parse the original header file
 %feature("director") OpenZWave::CallbackAdapter;
 %include "CallbackAdapter.h"
