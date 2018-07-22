@@ -2,34 +2,35 @@ package openzwave
 
 import (
 	"time"
-	"fmt"
-	"sync"
+		"sync"
 )
 
 type ZwaveConfig struct {
 	ZwaveLibDir  string
 	StateDir     string
-	Adapters     []string
 	NetworkKey   string
 	LogFile      string
 	LogToConsole bool
 	InitTimeout  time.Duration
 }
 
-type Listener chan <- Notification
-
-type NodeAddress struct {
-	HomeId uint32
-	NodeId uint8
-}
+type Listener chan <- ZwaveNotify
 
 type ZwaveInterface struct {
 	Manager Manager
-	HomeIdList map[uint32]string
+	notifyDispatcher CallbackAdapter
 
 	listenerMutex sync.Mutex
 	globalListeners map[Listener] Listener
-	notifyDispatcher CallbackAdapter
+
+	adapterMutex sync.Mutex
+	adapters map[string] string
+}
+
+func (zi *ZwaveInterface) AddAdapter(path string) () {
+	zi.adapterMutex.Lock()
+	zi.adapters[path] = path
+	zi.Manager.AddDriver(path)
 }
 
 func (zi *ZwaveInterface) AddListener(listener Listener) (){
@@ -65,7 +66,7 @@ func MakeZwaveInterface(options *ZwaveConfig) (*ZwaveInterface, error) {
 
 	config.AddOptionBool("SaveConfiguration", options.StateDir != "")
 	config.AddOptionString("UserPath", ensure(options.StateDir), false)
-	config.AddOptionString("ConfigPath", ensure(options.StateDir), false)
+	config.AddOptionString("ConfigPath", ensure(options.ZwaveLibDir), false)
 
 	config.AddOptionBool("ConsoleOutput", options.LogToConsole)
 	config.AddOptionString("LogFileName", options.LogFile, false)
@@ -81,45 +82,14 @@ func MakeZwaveInterface(options *ZwaveConfig) (*ZwaveInterface, error) {
 		}
 	}()
 
-	homeIdChan := make(chan uint32, len(options.Adapters))
-	initAdapter := MakeDelegatingHandler(func(notify Notification){
-		if notify.GetType() == NotificationType_DriverReady {
-			select {
-			case homeIdChan <- notify.GetHomeId():
-			default:
-			}
-		}
-	})
-	defer DeleteCallbackAdapter(initAdapter)
-
-	AddNotifyHandler(manager, initAdapter)
-	defer RemoveNotifyHandler(manager, initAdapter)
-
-	for _, serialAdapter := range options.Adapters {
-		manager.AddDriver(serialAdapter)
-	}
-
 	zi := new(ZwaveInterface)
 	zi.Manager = manager
-	zi.HomeIdList = make(map[uint32]string)
 	zi.globalListeners = make(map[Listener]Listener)
 
-	timeout := time.After(options.InitTimeout)
-	for len(zi.HomeIdList) < len(options.Adapters) {
-		select {
-		case <-timeout:
-			return nil, fmt.Errorf("timed out initializing devices")
-		case homeId := <- homeIdChan:
-			fmt.Printf("Discovered device with homeid 0x%X on %s\n", homeId,
-				manager.GetControllerPath(homeId))
-			zi.HomeIdList[homeId] = manager.GetControllerPath(homeId)
-		}
-	}
-
-	zi.notifyDispatcher = MakeDelegatingHandler(func(notify Notification) {
+	zi.notifyDispatcher = MakeDelegatingHandler(func(notify ZwaveNotify) {
 		zi.listenerMutex.Lock()
 		defer zi.listenerMutex.Unlock()
-		for k, _ := range zi.globalListeners {
+		for k := range zi.globalListeners {
 			k <- notify
 		}
 	})
@@ -134,8 +104,6 @@ func (zwaveInterface *ZwaveInterface) StopZwaveInterface() {
 	DeleteCallbackAdapter(zwaveInterface.notifyDispatcher)
 
 	zwaveInterface.Manager = nil
-	zwaveInterface.HomeIdList = make(map[uint32]string)
-
 	ManagerDestroy()
 	OptionsDestroy()
 }

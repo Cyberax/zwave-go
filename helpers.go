@@ -2,14 +2,14 @@ package openzwave
 
 type zwaveCallbackHandler struct {
 	CallbackAdapter
-	target func(notify Notification)
+	target func(notify ZwaveNotify)
 }
 
 func (ctx *zwaveCallbackHandler) OnManagerNotify(notify Notification) {
-	ctx.target(notify)
+	ctx.target(ConvertNotification(notify))
 }
 
-func MakeDelegatingHandler(target func(notify Notification)) CallbackAdapter {
+func MakeDelegatingHandler(target func(notify ZwaveNotify)) CallbackAdapter {
 	chandler := new(zwaveCallbackHandler)
     chandler.target = target
 	adapter := NewDirectorCallbackAdapter(chandler)

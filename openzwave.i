@@ -28,6 +28,7 @@ namespace std
 // Use explicitly sized types
 %typemap(gotype) int, const int & "int32"
 %typemap(gotype) unsigned int, const unsigned int & "uint32"
+%typemap(gotype) uint64, const uint64 & "uint64"
 
 %{
     #include "Defs.h"
